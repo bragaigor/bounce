@@ -20,7 +20,8 @@ public class Bounce {
         frame.setTitle("Bounce");
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//        frame.setContentPane(panel);
+        frame.addWindowListener(new WindowManager(panel));
+        panel.justPaint();
     }
 
 }
