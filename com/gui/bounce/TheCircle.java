@@ -3,6 +3,7 @@ package com.gui.bounce;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Ellipse2D;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
@@ -15,7 +16,7 @@ abstract class TheCircle extends Ellipse2D.Double {
 	private final int BOUNCE_COUNT_LIMIT = 5;
 	private final int DELTA_SPEED_LIMIT = 8;
 	private int bounce_count;
-	private Color myColor;
+	Color myColor;
 	private ThePanel attachedPanel;
 	
 	static {
@@ -71,11 +72,15 @@ abstract class TheCircle extends Ellipse2D.Double {
 	}
 	
 	public static void updateCircleList(Set<TheCircle> circles) {
-		for (Iterator<TheCircle> i = circles.iterator(); i.hasNext();) {
-			TheCircle circle = i.next();
-			if (circle.isOutOfLimits()) {
-		        i.remove();
-		    }
+		try {
+			for (Iterator<TheCircle> i = circles.iterator(); i.hasNext();) {
+				TheCircle circle = i.next();
+				if (circle.isOutOfLimits()) {
+			        i.remove();
+			    }
+			}
+		} catch (ConcurrentModificationException e) {
+			System.out.println("ConcurrentModificationException cautch at updateCircleList ------------------------------ ");
 		}
 	}
 	
@@ -120,20 +125,21 @@ abstract class TheCircle extends Ellipse2D.Double {
 	}
 	
 	public void updatePosition(Graphics2D g) {
-		g.setColor(this.myColor);
+//		g.setColor(this.myColor);
 		if (bounce_count < BOUNCE_COUNT_LIMIT && 
 				(((this.x + (this.size / 2)) >= attachedPanel.getXFrameSize()) || ((this.x - (this.size / 2)) <= 0))) {
 			deltaX *= -1;
 			bounce_count++;
 		}
+		/* There seems to be 20 pixels of padding in the bottom of the Panel */
 		if (bounce_count < BOUNCE_COUNT_LIMIT && 
-				(((this.y + (this.size / 2)) >= attachedPanel.getYFrameSize()) || ((this.y - (this.size / 2)) <= 0))) {
+				(((this.y + (this.size + 20)) >= attachedPanel.getYFrameSize()) || ((this.y - (this.size / 2)) <= 0))) {
 			deltaY *= -1;
 			bounce_count++;
 		}
 		this.x += deltaX;
 		this.y += deltaY;
-		g.fill(this);
+//		g.fill(this);
 		
 	}
 }
