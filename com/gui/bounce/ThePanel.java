@@ -4,17 +4,21 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JPanel;
 
 public class ThePanel extends JPanel {
 	
 	private static final long serialVersionUID = -1196245635658787998L;
+	private final int TOTAL_CIRCLES = 100;
 	private int framesPerSecond = 60;
 	private final double INTERVAL_CONST = 1000.0 / framesPerSecond;
 	// TODO: Update to ArrayList or HashMap
-	private TheCircle circleList[];
+//	private TheCircle circleList[];
+	private Set<TheCircle> circleList;
 	private int currentFrame = 0;
 	private long previousTime = 0;
 	private int totalSeconds = 0;
@@ -23,22 +27,27 @@ public class ThePanel extends JPanel {
 	private boolean frameCountCheck[]; // Keeps track of frames that have already been counted
 	private List<Integer> framesPerIteration;
 	private boolean warmup;
+	private int xFrameSize, yFrameSize;
+	private boolean greenSwitch, blueSwitch, redSwitch;
 	
 	public ThePanel(int xFrameSize, int yFrameSize) {
 		super();
 		repaint();
-		this.circleList = new TheCircle[1000];
+		this.circleList = new HashSet<>();
 		this.frameCount = new int[framesPerSecond];
 		this.frameCountCheck = new boolean[framesPerSecond + 1];
 		this.framesPerIteration = new ArrayList<>();
+		this.xFrameSize = xFrameSize;
+		this.yFrameSize = yFrameSize;
+		
 		for (int i = 0; i < 700; i++) {
-			circleList[i] = TheCircle.newInstance(xFrameSize, yFrameSize, Color.green);
+			circleList.add(TheCircle.newInstance(Color.green, this));
 		}
 		for (int i = 700; i < 900; i++) {
-			circleList[i] = TheCircle.newInstance(xFrameSize, yFrameSize, Color.blue);
+			circleList.add(TheCircle.newInstance(Color.blue, this));
 		}
-		for (int i = 900; i < circleList.length; i++) {
-			circleList[i] = TheCircle.newInstance(xFrameSize, yFrameSize, Color.red);
+		for (int i = 900; i < TOTAL_CIRCLES; i++) {
+			circleList.add(TheCircle.newInstance(Color.red, this));
 		}
 		for(int i = 0; i < this.frameCountCheck.length; i++) {
 			this.frameCountCheck[i] = false; 
@@ -47,15 +56,21 @@ public class ThePanel extends JPanel {
 		warmup = false;
 	}
 	
+	public int getXFrameSize() {
+		return this.xFrameSize;
+	}
+	
+	public int getYFrameSize() {
+		return this.yFrameSize;
+	}
+	
 	@Override
 	public void paint(Graphics g) {
 		Graphics2D g2=(Graphics2D) g;
 		super.paint(g);
 		
-//		g2.setColor(Color.red);
-		for (int i = 0; i < circleList.length; i++) {
-			circleList[i].updatePosition(g2);
-//			g2.fill(circleList[i]);
+		for (TheCircle circle : circleList) {
+			circle.updatePosition(g2);
 		}
 		
 	}
@@ -73,6 +88,25 @@ public class ThePanel extends JPanel {
 				this.frameCount[index]++;
 				currentFrame++;
 				framesPerSec++;
+				if (greenSwitch) {
+					circleList.add(TheCircle.newInstance(Color.green, this));
+					blueSwitch = !blueSwitch;
+				}
+				if (blueSwitch) {
+					circleList.add(TheCircle.newInstance(Color.blue, this));
+					redSwitch = !redSwitch;
+				}
+				if (redSwitch) {
+					circleList.add(TheCircle.newInstance(Color.red, this));
+				}
+				greenSwitch = !greenSwitch;
+
+				try {
+					Thread.sleep(1);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				repaint();
 			}
 			
@@ -83,6 +117,7 @@ public class ThePanel extends JPanel {
 					System.out.println("Seconds ellapsed: " + totalSeconds + " seconds");
 					System.out.println("Frames in last second: " + framesPerSec + " frames");
 					System.out.println("Total frames: " + currentFrame + " frames");
+					System.out.println("Total circles in the paint: " + this.circleList.size());
 					this.framesPerIteration.add(framesPerSec);
 					this.frameCountCheck[this.frameCountCheck.length - 1] = false;
 					for (int i = 0; i < this.frameCount.length; i++) {
@@ -94,9 +129,11 @@ public class ThePanel extends JPanel {
 				framesPerSec = 0;
 				currentTime = System.currentTimeMillis();
 				previousTime = currentTime;
+				TheCircle.updateCircleList(this.circleList);
+//				if (this.circleList.size() < 800) {
+//					TheCircle.addCircles(100, circleList, this);
+//				}
 			}
-	//		currentFrame++;
-	//		framesPerSec++;
 		}
 	}
 	
@@ -114,6 +151,7 @@ public class ThePanel extends JPanel {
 		System.out.println("Frames lost: " + lostFrames + " lost frames");
 		System.out.println("Detailed frames lost info: TODO");
 		System.out.println("Seconds ellapsed: " + this.totalSeconds + " seconds");
+		System.out.println("Circles who survived: " + this.circleList.size());
 		System.out.println("More info???");
 		System.out.println("-------------------------------------------");
 	}
